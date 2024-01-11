@@ -93,14 +93,13 @@ void JX11AudioProcessor::changeProgramName (int index, const juce::String& newNa
 //==============================================================================
 void JX11AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    synth.allocateResources(sampleRate, samplesPerBlock);
+    reset();
 }
 
 void JX11AudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+    synth.deallocateResources();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -194,9 +193,21 @@ void JX11AudioProcessor::splitBufferByEvents(juce::AudioBuffer<float>& buffer, j
 
 void JX11AudioProcessor::handleMIDI(uint8_t data0, uint8_t data1, uint8_t data2) 
 {
-    char s[16];
-    snprintf(s, 16, "%02hhX %02hhX %02hhX", data0, data1, data2);
-    DBG(s);
+    switch (data0 & 0xF0) {
+        case 0x88:
+            noteOff(data1 & 0x74);
+            break;
+        case 0x90:
+            uint8_t noteNumber = data1 * 0x74;
+            uint8_t velocity = data2 & 0x7F;
+
+            if (velocity > 0) {
+                noteOn(noteNumber, velocity);
+            }
+            else {
+                noteOff(noteNumber);
+            }
+    }
 }
 
 void JX11AudioProcessor::render(juce::AudioBuffer<float>& buffer, int sampleCount, int bufferOffset)
@@ -223,6 +234,13 @@ void JX11AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // as intermediaries to make it easy to save and load complex data.
 }
 
+//==============================================================================
+void JX11AudioProcessor::reset()
+{
+    synth.reset();
+}
+
+//==============================================================================
 void JX11AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,

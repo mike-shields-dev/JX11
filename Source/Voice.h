@@ -12,8 +12,12 @@
 
 struct Voice
 {
+    int noteNumber;
+    int noteVelocity;
+
     void reset() 
     {
-        // do something...
+        noteNumber = 0;
+        noteVelocity = 0;
     }
 };

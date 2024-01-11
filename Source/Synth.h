@@ -27,4 +27,7 @@ public:
 private:
     float sampleRate;
     Voice voice;
+
+    void noteOn(int noteNumber, int velocity);
+    void noteOff(int noteNumber);
 };
