@@ -201,7 +201,7 @@ void JX11AudioProcessor::handleMIDI(uint8_t data0, uint8_t data1, uint8_t data2)
 
 void JX11AudioProcessor::render(juce::AudioBuffer<float>& buffer, int sampleCount, int bufferOffset)
 {
-    // Do stuff...
+    // To do...
 }
 
 //==============================================================================
