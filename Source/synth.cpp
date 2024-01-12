@@ -1,28 +1,19 @@
-/*
-  ==============================================================================
-
-    Synth.cpp
-    Created: 11 Jan 2024 1:17:50pm
-    Author:  mrmps
-
-  ==============================================================================
-*/
-
 #include "Synth.h"
+#include "Utils.h"
 
 Synth::Synth()
 {
     sampleRate = 44100.0f;
 }
 
-void Synth::allocateResources(double sampleRate_, int /* samplesPerBlock */)
+void Synth::allocateResources(double sampleRate_, int /*samplesPerBlock*/)
 {
     sampleRate = static_cast<float>(sampleRate_);
 }
 
-void Synth::deallocateResources() 
+void Synth::deallocateResources()
 {
-    // To do...
+    // do nothing
 }
 
 void Synth::reset()
@@ -33,38 +24,61 @@ void Synth::reset()
 
 void Synth::render(float** outputBuffers, int sampleCount)
 {
-    // To do...
+    float* outputBufferLeft = outputBuffers[0];
+    float* outputBufferRight = outputBuffers[1];
+
+    for (int sample = 0; sample < sampleCount; ++sample) {
+        float noise = noiseGen.nextValue();
+
+        float output = 0.0f;
+
+        if (voice.note > 0) {
+            output = noise * (voice.velocity / 127.0f) * 0.5f;
+        }
+
+        outputBufferLeft[sample] = output;
+        if (outputBufferRight != nullptr) {
+            outputBufferRight[sample] = output;
+        }
+    }
+
+    protectYourEars(outputBufferLeft, sampleCount);
+    protectYourEars(outputBufferRight, sampleCount);
 }
 
 void Synth::midiMessage(uint8_t data0, uint8_t data1, uint8_t data2)
 {
     switch (data0 & 0xF0) {
+        // Note off
     case 0x80:
-        noteOff(data1 & 0x74);
+        noteOff(data1 & 0x7F);
         break;
-    case 0x90:
-        uint8_t noteNumber = data1 * 0x74;
-        uint8_t velocity = data2 & 0x7F;
 
-        if (velocity > 0) {
-            noteOn(noteNumber, velocity);
+        // Note on
+    case 0x90: {
+        uint8_t note = data1 & 0x7F;
+        uint8_t velo = data2 & 0x7F;
+        if (velo > 0) {
+            noteOn(note, velo);
         }
         else {
-            noteOff(noteNumber);
+            noteOff(note);
         }
+        break;
+    }
     }
 }
 
-void Synth::noteOn(int noteNumber, int velocity)
+void Synth::noteOn(int note, int velocity)
 {
-    voice.noteNumber = noteNumber;
-    voice.noteVelocity = velocity;
+    voice.note = note;
+    voice.velocity = velocity;
 }
 
-void Synth::noteOff(int noteNumber)
+void Synth::noteOff(int note)
 {
-    if (voice.noteNumber == noteNumber) {
-        voice.noteNumber = 0;
-        voice.noteVelocity = 0;
+    if (voice.note == note) {
+        voice.note = 0;
+        voice.velocity = 0;
     }
 }
