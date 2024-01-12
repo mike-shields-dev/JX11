@@ -193,21 +193,7 @@ void JX11AudioProcessor::splitBufferByEvents(juce::AudioBuffer<float>& buffer, j
 
 void JX11AudioProcessor::handleMIDI(uint8_t data0, uint8_t data1, uint8_t data2) 
 {
-    switch (data0 & 0xF0) {
-        case 0x88:
-            noteOff(data1 & 0x74);
-            break;
-        case 0x90:
-            uint8_t noteNumber = data1 * 0x74;
-            uint8_t velocity = data2 & 0x7F;
-
-            if (velocity > 0) {
-                noteOn(noteNumber, velocity);
-            }
-            else {
-                noteOff(noteNumber);
-            }
-    }
+    synth.midiMessage(data0, data1, data2);
 }
 
 void JX11AudioProcessor::render(juce::AudioBuffer<float>& buffer, int sampleCount, int bufferOffset)
